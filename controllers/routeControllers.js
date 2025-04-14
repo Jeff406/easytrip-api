@@ -2,10 +2,17 @@ const Route = require('../models/Route');
 
 exports.createRoute = async (req, res) => {
   try {
-    const { from, to, driverId } = req.body;
+    const { from, to, driverId, routeLine } = req.body;
 
-    if (!from || !to || !driverId || !from.lat || !from.lng || !to.lat || !to.lng) {
-      return res.status(400).json({ message: 'Missing required fields or coordinates' });
+    // Validate fields and coordinate format
+    if (
+      !from?.address || !Array.isArray(from?.location?.coordinates) ||
+      !to?.address || !Array.isArray(to?.location?.coordinates) ||
+      !driverId ||
+      !routeLine?.type || routeLine.type !== 'LineString' ||
+      !Array.isArray(routeLine.coordinates)
+    ) {
+      return res.status(400).json({ message: 'Missing or invalid fields' });
     }
 
     const newRoute = new Route({
@@ -14,15 +21,19 @@ exports.createRoute = async (req, res) => {
         address: from.address,
         location: {
           type: 'Point',
-          coordinates: [from.lng, from.lat] // Note the order: [lng, lat]
+          coordinates: from.location.coordinates
         }
       },
       to: {
         address: to.address,
         location: {
           type: 'Point',
-          coordinates: [to.lng, to.lat]
+          coordinates: to.location.coordinates
         }
+      },
+      routeLine: {
+        type: 'LineString',
+        coordinates: routeLine.coordinates
       }
     });
 
@@ -36,24 +47,28 @@ exports.createRoute = async (req, res) => {
 };
 
 exports.getNearbyRoutes = async (req, res) => {
-  const { lng, lat, maxDistance = 10000 } = req.query; // maxDistance in meters
+  const { lng, lat, maxDistance = 100 } = req.query;
 
   if (!lng || !lat) {
     return res.status(400).json({ message: 'Missing lng and lat in query params' });
   }
 
   try {
-    const routes = await Route.find({
-      'from.location': {
-        $near: {
-          $geometry: {
+    const routes = await Route.aggregate([
+      {
+        $geoNear: {
+          near: {
             type: 'Point',
             coordinates: [parseFloat(lng), parseFloat(lat)]
           },
-          $maxDistance: parseInt(maxDistance)
+          distanceField: 'distance',
+          spherical: true,
+          maxDistance: parseInt(maxDistance),
+          key: 'routeLine'
         }
-      }
-    }).limit(10); // or increase based on your UI
+      },
+      { $limit: 10 }
+    ]);
 
     res.json({ routes });
   } catch (error) {

@@ -4,23 +4,30 @@ const RouteSchema = new mongoose.Schema({
   driverId: { type: String, required: true },
   from: {
     address: String,
-    location: {
-      type: { type: String, enum: ['Point'], required: true },
-      coordinates: { type: [Number], required: true }, // [lng, lat]
-    }
+    lat: Number,
+    lng: Number,
   },
   to: {
     address: String,
-    location: {
-      type: { type: String, enum: ['Point'], required: true },
-      coordinates: { type: [Number], required: true }, // [lng, lat]
-    }
+    lat: Number,
+    lng: Number,
   },
-  createdAt: { type: Date, default: Date.now }
+  routeLine: {
+    type: {
+      type: String,
+      enum: ['LineString'],
+      required: true,
+      default: 'LineString',
+    },
+    coordinates: {
+      type: [[Number]], // [ [lng, lat], [lng, lat], ... ]
+      required: true,
+    },
+  },
+  createdAt: { type: Date, default: Date.now },
 });
 
-// Create 2dsphere indexes
-RouteSchema.index({ 'from.location': '2dsphere' });
-RouteSchema.index({ 'to.location': '2dsphere' });
+// Create 2dsphere index for routeLine
+RouteSchema.index({ routeLine: '2dsphere' });
 
 module.exports = mongoose.model('Route', RouteSchema);
