@@ -139,10 +139,9 @@ exports.getRoutesNearbyBothLocations = async (req, res) => {
         return {
           ...route,
           destDistance: destRoute.destDistance,
-          totalDistance: route.pickupDistance + destRoute.destDistance
+          pickupDistance: route.pickupDistance
         };
       })
-      .sort((a, b) => a.totalDistance - b.totalDistance)
       .slice(0, parseInt(limit));
 
     res.json({ 
