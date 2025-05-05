@@ -1,33 +1,65 @@
 const mongoose = require('mongoose');
 
-const RouteSchema = new mongoose.Schema({
-  driverId: { type: String, required: true },
+const routeSchema = new mongoose.Schema({
+  driverId: {
+    type: String,
+    required: true
+  },
   from: {
-    address: String,
-    lat: Number,
-    lng: Number,
+    address: {
+      type: String,
+      required: true
+    },
+    lat: {
+      type: Number,
+      required: true
+    },
+    lng: {
+      type: Number,
+      required: true
+    }
   },
   to: {
-    address: String,
-    lat: Number,
-    lng: Number,
+    address: {
+      type: String,
+      required: true
+    },
+    lat: {
+      type: Number,
+      required: true
+    },
+    lng: {
+      type: Number,
+      required: true
+    }
   },
   routeLine: {
     type: {
       type: String,
       enum: ['LineString'],
-      required: true,
-      default: 'LineString',
+      required: true
     },
     coordinates: {
-      type: [[Number]], // [ [lng, lat], [lng, lat], ... ]
-      required: true,
-    },
+      type: [[Number]],
+      required: true
+    }
   },
-  createdAt: { type: Date, default: Date.now },
+  departureTime: {
+    type: Date,
+    required: true
+  },
+  transportMode: {
+    type: String,
+    required: true,
+    enum: ['car', 'scooter']
+  },
+  createdAt: {
+    type: Date,
+    default: Date.now
+  }
 });
 
 // Create 2dsphere index for routeLine
-RouteSchema.index({ routeLine: '2dsphere' });
+routeSchema.index({ 'routeLine': '2dsphere' });
 
-module.exports = mongoose.model('Route', RouteSchema);
+module.exports = mongoose.model('Route', routeSchema);
