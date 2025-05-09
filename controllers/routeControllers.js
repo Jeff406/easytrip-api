@@ -105,12 +105,25 @@ exports.getNearbyRoutes = async (req, res) => {
 };
 
 exports.getRoutesNearbyBothLocations = async (req, res) => {
-  const { pickupLng, pickupLat, destLng, destLat, maxDistance = 100, limit = 10 } = req.query;
+  const { pickupLng, pickupLat, destLng, destLat, maxDistance = 100, limit = 10, departureTime } = req.query;
 
   // Validate coordinates
   if (!pickupLng || !pickupLat || !destLng || !destLat) {
     return res.status(400).json({ message: 'Missing required coordinates in query params' });
   }
+
+  // Validate departureTime
+  if (!departureTime) {
+    return res.status(400).json({ message: 'Missing departureTime in query params' });
+  }
+
+  const requestTime = new Date(departureTime);
+  if (isNaN(requestTime.getTime())) {
+    return res.status(400).json({ message: 'Invalid departureTime format' });
+  }
+
+  // Calculate maximum departure time (30 minutes before request time)
+  const maxDepartureTime = new Date(requestTime.getTime() - 30 * 60 * 1000);
 
   // Validate coordinate format
   const coordinates = [pickupLng, pickupLat, destLng, destLat].map(coord => parseFloat(coord));
@@ -134,6 +147,14 @@ exports.getRoutesNearbyBothLocations = async (req, res) => {
             key: 'routeLine'
           }
         },
+        {
+          $match: {
+            departureTime: { 
+              $gte: maxDepartureTime,
+              $lt: requestTime
+            }
+          }
+        },
         { $limit: parseInt(limit) }
       ]),
       Route.aggregate([
@@ -147,6 +168,14 @@ exports.getRoutesNearbyBothLocations = async (req, res) => {
             spherical: true,
             maxDistance: parseInt(maxDistance),
             key: 'routeLine'
+          }
+        },
+        {
+          $match: {
+            departureTime: { 
+              $gte: maxDepartureTime,
+              $lt: requestTime
+            }
           }
         },
         { $limit: parseInt(limit) }
