@@ -107,6 +107,7 @@ exports.getNearbyRoutes = async (req, res) => {
 exports.getRoutesNearbyBothLocations = async (req, res) => {
   const { pickupLng, pickupLat, destLng, destLat, maxDistance = 100, limit = 10, departureTime } = req.query;
 
+  console.log('Departure time:', departureTime);
   // Validate coordinates
   if (!pickupLng || !pickupLat || !destLng || !destLat) {
     return res.status(400).json({ message: 'Missing required coordinates in query params' });
