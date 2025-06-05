@@ -32,7 +32,8 @@ exports.requestTrip = async (req, res) => {
     // Create new trip request with transformed data
     const tripRequest = new TripRequest({
       routeId,
-      driverId: route.driverId, // Get driverId from the route
+      driverId: route.driverId,
+      passengerId: req.user.uid, // Get passenger ID from authenticated user
       pickup: {
         address: pickup,
         lat: pickupCoords[1],
@@ -66,6 +67,145 @@ exports.requestTrip = async (req, res) => {
     });
   } catch (error) {
     console.error('Error creating trip request:', error);
+    res.status(500).json({
+      message: 'Server error',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
+  }
+};
+
+exports.getTripRequest = async (req, res) => {
+  try {
+    const tripRequest = await TripRequest.findById(req.params.id);
+    
+    if (!tripRequest) {
+      return res.status(404).json({ message: 'Trip request not found' });
+    }
+
+    // Check if the user is either the driver or passenger
+    if (tripRequest.driverId !== req.user.uid && tripRequest.passengerId !== req.user.uid) {
+      return res.status(403).json({ message: 'Not authorized to view this trip request' });
+    }
+
+    res.json(tripRequest);
+  } catch (error) {
+    console.error('Error getting trip request:', error);
+    res.status(500).json({
+      message: 'Server error',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
+  }
+};
+
+exports.acceptTripRequest = async (req, res) => {
+  try {
+    const tripRequest = await TripRequest.findById(req.params.id);
+    
+    if (!tripRequest) {
+      return res.status(404).json({ message: 'Trip request not found' });
+    }
+
+    // Check if the user is the driver
+    if (tripRequest.driverId !== req.user.uid) {
+      return res.status(403).json({ message: 'Only the driver can accept trip requests' });
+    }
+
+    // Check if the trip request is still pending
+    if (tripRequest.status !== 'pending') {
+      return res.status(400).json({ message: 'Trip request is no longer pending' });
+    }
+
+    tripRequest.status = 'accepted';
+    await tripRequest.save();
+
+    // TODO: Send notification to passenger about acceptance
+
+    res.json({
+      message: 'Trip request accepted successfully',
+      tripRequest
+    });
+  } catch (error) {
+    console.error('Error accepting trip request:', error);
+    res.status(500).json({
+      message: 'Server error',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
+  }
+};
+
+exports.rejectTripRequest = async (req, res) => {
+  try {
+    const tripRequest = await TripRequest.findById(req.params.id);
+    
+    if (!tripRequest) {
+      return res.status(404).json({ message: 'Trip request not found' });
+    }
+
+    // Check if the user is the driver
+    if (tripRequest.driverId !== req.user.uid) {
+      return res.status(403).json({ message: 'Only the driver can reject trip requests' });
+    }
+
+    // Check if the trip request is still pending
+    if (tripRequest.status !== 'pending') {
+      return res.status(400).json({ message: 'Trip request is no longer pending' });
+    }
+
+    tripRequest.status = 'rejected';
+    await tripRequest.save();
+
+    // TODO: Send notification to passenger about rejection
+
+    res.json({
+      message: 'Trip request rejected successfully',
+      tripRequest
+    });
+  } catch (error) {
+    console.error('Error rejecting trip request:', error);
+    res.status(500).json({
+      message: 'Server error',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
+  }
+};
+
+exports.getDriverTripRequests = async (req, res) => {
+  try {
+    const { driverId } = req.params;
+    
+    // Check if the user is requesting their own trip requests
+    if (driverId !== req.user.uid) {
+      return res.status(403).json({ message: 'Not authorized to view these trip requests' });
+    }
+
+    const tripRequests = await TripRequest.find({ driverId })
+      .sort({ createdAt: -1 }); // Most recent first
+
+    res.json(tripRequests);
+  } catch (error) {
+    console.error('Error getting driver trip requests:', error);
+    res.status(500).json({
+      message: 'Server error',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
+  }
+};
+
+exports.getPassengerTripRequests = async (req, res) => {
+  try {
+    const { passengerId } = req.params;
+    
+    // Check if the user is requesting their own trip requests
+    if (passengerId !== req.user.uid) {
+      return res.status(403).json({ message: 'Not authorized to view these trip requests' });
+    }
+
+    const tripRequests = await TripRequest.find({ passengerId })
+      .sort({ createdAt: -1 }); // Most recent first
+
+    res.json(tripRequests);
+  } catch (error) {
+    console.error('Error getting passenger trip requests:', error);
     res.status(500).json({
       message: 'Server error',
       error: process.env.NODE_ENV === 'development' ? error.message : undefined

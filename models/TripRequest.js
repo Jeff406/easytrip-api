@@ -10,6 +10,10 @@ const tripRequestSchema = new mongoose.Schema({
     type: String,
     required: true
   },
+  passengerId: {
+    type: String,
+    required: true
+  },
   pickup: {
     address: {
       type: String,
@@ -66,7 +70,17 @@ const tripRequestSchema = new mongoose.Schema({
   createdAt: {
     type: Date,
     default: Date.now
+  },
+  updatedAt: {
+    type: Date,
+    default: Date.now
   }
+});
+
+// Update the updatedAt timestamp before saving
+tripRequestSchema.pre('save', function(next) {
+  this.updatedAt = new Date();
+  next();
 });
 
 module.exports = mongoose.model('TripRequest', tripRequestSchema); 
