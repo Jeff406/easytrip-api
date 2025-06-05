@@ -1,5 +1,6 @@
 const TripRequest = require('../models/TripRequest');
 const Route = require('../models/Route');
+const notificationService = require('../services/notificationService');
 
 exports.requestTrip = async (req, res) => {
   try {
@@ -50,6 +51,14 @@ exports.requestTrip = async (req, res) => {
     });
 
     await tripRequest.save();
+
+    // Send notification to driver
+    try {
+      await notificationService.sendTripRequestNotification(route.driverId, tripRequest);
+    } catch (notificationError) {
+      console.error('Error sending notification:', notificationError);
+      // Don't fail the request if notification fails
+    }
 
     res.status(201).json({
       message: 'Trip request created successfully',
