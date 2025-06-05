@@ -22,9 +22,17 @@ exports.authenticateToken = async (req, res, next) => {
     const token = authHeader.split('Bearer ')[1];
     
     try {
-      // For development, we'll just pass through the token
-      // In production, you should verify the token with Firebase Admin
-      req.user = { uid: token };
+      // Verify the Firebase ID token
+      const decodedToken = await admin.auth().verifyIdToken(token);
+      console.log('Decoded token:', decodedToken);
+      
+      // Add the user's Firebase UID to the request
+      req.user = { 
+        uid: decodedToken.uid,
+        email: decodedToken.email,
+        phoneNumber: decodedToken.phone_number
+      };
+      
       next();
     } catch (error) {
       console.error('Error verifying token:', error);

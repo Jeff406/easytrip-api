@@ -4,12 +4,23 @@ const User = require('../models/User');
 class NotificationService {
   async sendTripRequestNotification(driverId, tripRequest) {
     try {
-      // Get driver's device token
+      console.log('Attempting to send notification to driver:', driverId);
+      
+      // Get driver's device token using driverId (which is the Firebase ID)
       const driver = await User.findOne({ firebaseId: driverId });
-      if (!driver || !driver.deviceToken) {
-        console.log('Driver not found or no device token available');
+      console.log('Found driver in database:', driver ? 'Yes' : 'No');
+      
+      if (!driver) {
+        console.log('Driver not found in database with firebaseId:', driverId);
         return;
       }
+      
+      if (!driver.deviceToken) {
+        console.log('Driver found but no device token available for driverId:', driverId);
+        return;
+      }
+
+      console.log('Driver device token found, preparing notification message');
 
       // Prepare notification message
       const message = {
@@ -28,6 +39,8 @@ class NotificationService {
         },
         token: driver.deviceToken
       };
+
+      console.log('Sending notification with message:', message);
 
       // Send notification
       const response = await admin.messaging().send(message);

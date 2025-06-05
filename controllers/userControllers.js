@@ -3,22 +3,47 @@ const User = require('../models/User');
 exports.updateDeviceToken = async (req, res) => {
   try {
     const { token } = req.body;
-    const firebaseId = req.user.uid; // Assuming you have authentication middleware that adds user info to req
+    const firebaseId = req.user.uid; // Get the Firebase UID from the verified token
+
+    console.log('Updating device token for user:', {
+      firebaseId,
+      hasToken: !!token
+    });
 
     if (!token) {
       return res.status(400).json({ message: 'Device token is required' });
     }
 
+    if (!firebaseId) {
+      console.error('No Firebase ID available in request');
+      return res.status(400).json({ message: 'User ID is required' });
+    }
+
     // Find user by firebaseId and update device token
     const user = await User.findOneAndUpdate(
       { firebaseId },
-      { deviceToken: token },
-      { new: true, upsert: true } // Create user if doesn't exist
+      { 
+        firebaseId, // Ensure firebaseId is set
+        deviceToken: token,
+        updatedAt: new Date()
+      },
+      { 
+        new: true, 
+        upsert: true // Create user if doesn't exist
+      }
     );
+
+    console.log('Device token updated successfully for user:', {
+      firebaseId: user.firebaseId,
+      hasDeviceToken: !!user.deviceToken
+    });
 
     res.json({
       message: 'Device token updated successfully',
-      user
+      user: {
+        firebaseId: user.firebaseId,
+        hasDeviceToken: !!user.deviceToken
+      }
     });
   } catch (error) {
     console.error('Error updating device token:', error);
