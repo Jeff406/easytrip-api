@@ -14,12 +14,13 @@ exports.requestTrip = async (req, res) => {
       routeDistance,
       routeDuration,
       expectedPrice,
-      requestNote
+      requestNote,
+      passengerId
     } = req.body;
 
     // Validate required fields
     if (!routeId || !pickup || !destination || !pickupCoords || !destinationCoords || 
-        !departureTime || !routeDistance || !routeDuration || !expectedPrice) {
+        !departureTime || !routeDistance || !routeDuration || !expectedPrice || !passengerId) {
       return res.status(400).json({ message: 'Missing required fields' });
     }
 
@@ -33,7 +34,7 @@ exports.requestTrip = async (req, res) => {
     const tripRequest = new TripRequest({
       routeId,
       driverId: route.driverId,
-      passengerId: req.user.uid, // Get passenger ID from authenticated user
+      passengerId, // Get passenger ID from request body
       pickup: {
         address: pickup,
         lat: pickupCoords[1],

@@ -40,7 +40,10 @@ class NotificationService {
         token: driver.deviceToken
       };
 
-      console.log('Sending notification with message:', message);
+      console.log('Sending notification with message:', {
+        ...message,
+        token: message.token ? 'Token exists' : 'No token'
+      });
 
       // Send notification
       const response = await admin.messaging().send(message);
