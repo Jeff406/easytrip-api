@@ -107,7 +107,6 @@ exports.getNearbyRoutes = async (req, res) => {
 exports.getRoutesNearbyBothLocations = async (req, res) => {
   const { pickupLng, pickupLat, destLng, destLat, maxDistance = 100, limit = 10, departureTime } = req.query;
 
-  console.log('Departure time:', departureTime);
   // Validate coordinates
   if (!pickupLng || !pickupLat || !destLng || !destLat) {
     return res.status(400).json({ message: 'Missing required coordinates in query params' });
@@ -125,6 +124,10 @@ exports.getRoutesNearbyBothLocations = async (req, res) => {
 
   // Calculate maximum departure time (30 minutes before request time)
   const maxDepartureTime = new Date(requestTime.getTime() - 30 * 60 * 1000);
+  const maxDepartureTime2 = new Date(requestTime.getTime() - 10 * 60 * 1000);
+
+  console.log('Max departure time:', maxDepartureTime);
+  console.log('Max departure time 2:', maxDepartureTime2);
 
   // Validate coordinate format
   const coordinates = [pickupLng, pickupLat, destLng, destLat].map(coord => parseFloat(coord));
@@ -152,7 +155,7 @@ exports.getRoutesNearbyBothLocations = async (req, res) => {
           $match: {
             departureTime: { 
               $gte: maxDepartureTime,
-              $lt: requestTime
+              $lte: maxDepartureTime2
             }
           }
         },
