@@ -62,6 +62,11 @@ const tripRequestSchema = new mongoose.Schema({
     type: String,
     trim: true
   },
+  transportMode: {
+    type: String,
+    enum: ['car', 'scooter'],
+    required: true
+  },
   status: {
     type: String,
     enum: ['pending', 'accepted', 'rejected', 'cancelled'],

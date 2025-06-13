@@ -30,12 +30,13 @@ class NotificationService {
         },
         data: {
           type: 'TRIP_REQUEST',
-          tripRequestId: tripRequest._id.toString(),
-          routeId: tripRequest.routeId.toString(),
-          pickup: tripRequest.pickup.address,
-          destination: tripRequest.destination.address,
-          departureTime: tripRequest.departureTime.toISOString(),
-          expectedPrice: tripRequest.expectedPrice.toString()
+          trip_request_id: tripRequest._id.toString(),
+          trip_route_id: tripRequest.routeId.toString(),
+          trip_pickup: tripRequest.pickup.address,
+          trip_destination: tripRequest.destination.address,
+          trip_departure_time: tripRequest.departureTime.toISOString(),
+          trip_expected_price: tripRequest.expectedPrice.toString(),
+          trip_transport_mode: tripRequest.transportMode
         },
         token: driver.deviceToken
       };

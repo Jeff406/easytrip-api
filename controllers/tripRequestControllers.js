@@ -15,13 +15,18 @@ exports.requestTrip = async (req, res) => {
       routeDuration,
       expectedPrice,
       requestNote,
-      passengerId
+      transportMode
     } = req.body;
 
     // Validate required fields
     if (!routeId || !pickup || !destination || !pickupCoords || !destinationCoords || 
-        !departureTime || !routeDistance || !routeDuration || !expectedPrice || !passengerId) {
+        !departureTime || !routeDistance || !routeDuration || !expectedPrice || !transportMode) {
       return res.status(400).json({ message: 'Missing required fields' });
+    }
+
+    // Validate transport mode
+    if (!['car', 'scooter'].includes(transportMode)) {
+      return res.status(400).json({ message: 'Invalid transport mode. Must be either car or scooter' });
     }
 
     // Validate route exists and get driverId
@@ -34,7 +39,7 @@ exports.requestTrip = async (req, res) => {
     const tripRequest = new TripRequest({
       routeId,
       driverId: route.driverId,
-      passengerId, // Get passenger ID from request body
+      passengerId: req.user.uid, // Use authenticated user's ID
       pickup: {
         address: pickup,
         lat: pickupCoords[1],
@@ -49,7 +54,8 @@ exports.requestTrip = async (req, res) => {
       routeDistance,
       routeDuration,
       expectedPrice,
-      requestNote
+      requestNote,
+      transportMode
     });
 
     await tripRequest.save();

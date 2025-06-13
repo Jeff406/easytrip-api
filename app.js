@@ -13,7 +13,7 @@ app.use(cors());
 app.use(express.json());
 
 app.use('/api/routes', routeRoutes);
-app.use('/api/trips', tripRequestRoutes);
+app.use('/api/trip-requests', tripRequestRoutes);
 app.use('/api/users', userRoutes);
 
 mongoose.connect(process.env.MONGO_URI)
