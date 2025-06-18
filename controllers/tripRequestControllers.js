@@ -1,5 +1,6 @@
 const TripRequest = require('../models/TripRequest');
 const Route = require('../models/Route');
+const User = require('../models/User');
 const notificationService = require('../services/notificationService');
 
 exports.requestTrip = async (req, res) => {
@@ -188,7 +189,30 @@ exports.getDriverTripRequests = async (req, res) => {
     const tripRequests = await TripRequest.find({ driverId })
       .sort({ createdAt: -1 }); // Most recent first
 
-    res.json(tripRequests);
+    // Transform the data to include passenger information
+    const transformedTripRequests = await Promise.all(
+      tripRequests.map(async (tripRequest) => {
+        const tripRequestObj = tripRequest.toObject();
+        
+        // Get passenger information
+        let passengerName = 'Unknown Passenger';
+        try {
+          const passenger = await User.findOne({ firebaseId: tripRequest.passengerId });
+          if (passenger) {
+            passengerName = passenger.displayName || passenger.email || passenger.firebaseId;
+          }
+        } catch (error) {
+          console.error('Error fetching passenger info:', error);
+        }
+        
+        return {
+          ...tripRequestObj,
+          passengerName
+        };
+      })
+    );
+
+    res.json(transformedTripRequests);
   } catch (error) {
     console.error('Error getting driver trip requests:', error);
     res.status(500).json({
@@ -210,7 +234,42 @@ exports.getPassengerTripRequests = async (req, res) => {
     const tripRequests = await TripRequest.find({ passengerId })
       .sort({ createdAt: -1 }); // Most recent first
 
-    res.json(tripRequests);
+    // Transform the data to include driver and passenger information
+    const transformedTripRequests = await Promise.all(
+      tripRequests.map(async (tripRequest) => {
+        const tripRequestObj = tripRequest.toObject();
+        
+        // Get driver information
+        let driverName = 'Unknown Driver';
+        try {
+          const driver = await User.findOne({ firebaseId: tripRequest.driverId });
+          if (driver) {
+            driverName = driver.displayName || driver.email || driver.firebaseId;
+          }
+        } catch (error) {
+          console.error('Error fetching driver info:', error);
+        }
+
+        // Get passenger information (current user)
+        let passengerName = 'Unknown Passenger';
+        try {
+          const passenger = await User.findOne({ firebaseId: tripRequest.passengerId });
+          if (passenger) {
+            passengerName = passenger.displayName || passenger.email || passenger.firebaseId;
+          }
+        } catch (error) {
+          console.error('Error fetching passenger info:', error);
+        }
+        
+        return {
+          ...tripRequestObj,
+          driverName,
+          passengerName
+        };
+      })
+    );
+
+    res.json(transformedTripRequests);
   } catch (error) {
     console.error('Error getting passenger trip requests:', error);
     res.status(500).json({

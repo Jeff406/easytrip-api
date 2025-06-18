@@ -1,4 +1,5 @@
 const User = require('../models/User');
+const admin = require('firebase-admin');
 
 exports.updateDeviceToken = async (req, res) => {
   try {
@@ -19,11 +20,25 @@ exports.updateDeviceToken = async (req, res) => {
       return res.status(400).json({ message: 'User ID is required' });
     }
 
-    // Find user by firebaseId and update device token
+    // Get user info from Firebase
+    let userInfo = {};
+    try {
+      const userRecord = await admin.auth().getUser(firebaseId);
+      userInfo = {
+        displayName: userRecord.displayName,
+        email: userRecord.email
+      };
+    } catch (error) {
+      console.error('Error getting user info from Firebase:', error);
+    }
+
+    // Find user by firebaseId and update device token and user info
     const user = await User.findOneAndUpdate(
       { firebaseId },
       { 
         firebaseId, // Ensure firebaseId is set
+        displayName: userInfo.displayName,
+        email: userInfo.email,
         deviceToken: token,
         updatedAt: new Date()
       },
@@ -35,6 +50,8 @@ exports.updateDeviceToken = async (req, res) => {
 
     console.log('Device token updated successfully for user:', {
       firebaseId: user.firebaseId,
+      displayName: user.displayName,
+      email: user.email,
       hasDeviceToken: !!user.deviceToken
     });
 
@@ -42,6 +59,8 @@ exports.updateDeviceToken = async (req, res) => {
       message: 'Device token updated successfully',
       user: {
         firebaseId: user.firebaseId,
+        displayName: user.displayName,
+        email: user.email,
         hasDeviceToken: !!user.deviceToken
       }
     });

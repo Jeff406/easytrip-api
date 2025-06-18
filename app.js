@@ -6,6 +6,7 @@ require('dotenv').config();
 const routeRoutes = require('./routes/routeRoutes');
 const tripRequestRoutes = require('./routes/tripRequestRoutes');
 const userRoutes = require('./routes/userRoutes');
+const messageRoutes = require('./routes/messageRoutes');
 
 const app = express();
 
@@ -15,6 +16,7 @@ app.use(express.json());
 app.use('/api/routes', routeRoutes);
 app.use('/api/trip-requests', tripRequestRoutes);
 app.use('/api/users', userRoutes);
+app.use('/api/messages', messageRoutes);
 
 mongoose.connect(process.env.MONGO_URI)
   .then(() => console.log('MongoDB connected'))

@@ -6,6 +6,14 @@ const userSchema = new mongoose.Schema({
     required: true,
     unique: true
   },
+  displayName: {
+    type: String,
+    default: null
+  },
+  email: {
+    type: String,
+    default: null
+  },
   deviceToken: {
     type: String,
     default: null
