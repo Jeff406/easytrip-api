@@ -3,12 +3,11 @@ const admin = require('firebase-admin');
 
 exports.updateDeviceToken = async (req, res) => {
   try {
-    const { token, role } = req.body;
+    const { token } = req.body;
     const firebaseId = req.user.uid; // Get the Firebase UID from the verified token
 
     console.log('Updating device token for user:', {
       firebaseId,
-      role,
       hasToken: !!token
     });
 
@@ -38,7 +37,6 @@ exports.updateDeviceToken = async (req, res) => {
       { firebaseId },
       { 
         firebaseId,
-        role: role || null,
         displayName: userInfo.displayName,
         email: userInfo.email,
         deviceToken: token,
@@ -52,7 +50,6 @@ exports.updateDeviceToken = async (req, res) => {
 
     console.log('Device token updated successfully for user:', {
       firebaseId: user.firebaseId,
-      role: user.role,
       displayName: user.displayName,
       email: user.email,
       hasDeviceToken: !!user.deviceToken
