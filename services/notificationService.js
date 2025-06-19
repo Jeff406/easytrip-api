@@ -6,12 +6,12 @@ class NotificationService {
     try {
       console.log('Attempting to send notification to driver:', driverId);
       
-      // Get driver's device token using driverId (which is the Firebase ID)
-      const driver = await User.findOne({ firebaseId: driverId });
+      // Get driver's device token using driverId (which is the Firebase ID) and role
+      const driver = await User.findOne({ firebaseId: driverId, role: 'driver' });
       console.log('Found driver in database:', driver ? 'Yes' : 'No');
       
       if (!driver) {
-        console.log('Driver not found in database with firebaseId:', driverId);
+        console.log('Driver not found in database with firebaseId:', driverId, 'and role: driver');
         return;
       }
       

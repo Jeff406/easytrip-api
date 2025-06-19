@@ -194,10 +194,10 @@ exports.getDriverTripRequests = async (req, res) => {
       tripRequests.map(async (tripRequest) => {
         const tripRequestObj = tripRequest.toObject();
         
-        // Get passenger information
+        // Get passenger information by firebaseId and role
         let passengerName = 'Unknown Passenger';
         try {
-          const passenger = await User.findOne({ firebaseId: tripRequest.passengerId });
+          const passenger = await User.findOne({ firebaseId: tripRequest.passengerId, role: 'passenger' });
           if (passenger) {
             passengerName = passenger.displayName || passenger.email || passenger.firebaseId;
           }
@@ -239,10 +239,10 @@ exports.getPassengerTripRequests = async (req, res) => {
       tripRequests.map(async (tripRequest) => {
         const tripRequestObj = tripRequest.toObject();
         
-        // Get driver information
+        // Get driver information by firebaseId and role
         let driverName = 'Unknown Driver';
         try {
-          const driver = await User.findOne({ firebaseId: tripRequest.driverId });
+          const driver = await User.findOne({ firebaseId: tripRequest.driverId, role: 'driver' });
           if (driver) {
             driverName = driver.displayName || driver.email || driver.firebaseId;
           }
@@ -250,10 +250,10 @@ exports.getPassengerTripRequests = async (req, res) => {
           console.error('Error fetching driver info:', error);
         }
 
-        // Get passenger information (current user)
+        // Get passenger information (current user) by firebaseId and role
         let passengerName = 'Unknown Passenger';
         try {
-          const passenger = await User.findOne({ firebaseId: tripRequest.passengerId });
+          const passenger = await User.findOne({ firebaseId: tripRequest.passengerId, role: 'passenger' });
           if (passenger) {
             passengerName = passenger.displayName || passenger.email || passenger.firebaseId;
           }
