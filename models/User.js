@@ -33,9 +33,6 @@ const userSchema = new mongoose.Schema({
   }
 });
 
-// Remove compound index, ensure unique index on firebaseId
-userSchema.index({ firebaseId: 1 }, { unique: true });
-
 // Update the updatedAt timestamp before saving
 userSchema.pre('save', function(next) {
   this.updatedAt = new Date();
