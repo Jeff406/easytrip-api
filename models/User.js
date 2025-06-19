@@ -4,12 +4,12 @@ const userSchema = new mongoose.Schema({
   firebaseId: {
     type: String,
     required: true,
+    unique: true
   },
   role: {
     type: String,
-    required: true,
-    enum: ['driver', 'passenger'],
-    default: 'passenger'
+    enum: ['driver', 'passenger', null],
+    default: null
   },
   displayName: {
     type: String,
@@ -33,8 +33,8 @@ const userSchema = new mongoose.Schema({
   }
 });
 
-// Create compound index for firebaseId + role to ensure uniqueness per role
-userSchema.index({ firebaseId: 1, role: 1 }, { unique: true });
+// Remove compound index, ensure unique index on firebaseId
+userSchema.index({ firebaseId: 1 }, { unique: true });
 
 // Update the updatedAt timestamp before saving
 userSchema.pre('save', function(next) {

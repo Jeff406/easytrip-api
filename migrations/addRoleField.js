@@ -16,7 +16,6 @@ const migrateUsers = async () => {
     // Note: This is a simple migration. In a real scenario, you might want to
     // determine the role based on other data or ask the user to choose
     for (const user of existingUsers) {
-        console.log('user', user);
       if (!user.role) {
         user.role = 'passenger'; // Default role
         await user.save();

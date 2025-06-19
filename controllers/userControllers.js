@@ -21,10 +21,6 @@ exports.updateDeviceToken = async (req, res) => {
       return res.status(400).json({ message: 'User ID is required' });
     }
 
-    if (!role || !['driver', 'passenger'].includes(role)) {
-      return res.status(400).json({ message: 'Valid role is required (driver or passenger)' });
-    }
-
     // Get user info from Firebase
     let userInfo = {};
     try {
@@ -37,12 +33,12 @@ exports.updateDeviceToken = async (req, res) => {
       console.error('Error getting user info from Firebase:', error);
     }
 
-    // Find user by firebaseId and role, update device token and user info
+    // Find user by firebaseId and update device token and user info
     const user = await User.findOneAndUpdate(
-      { firebaseId, role },
+      { firebaseId },
       { 
         firebaseId,
-        role,
+        role: role || null,
         displayName: userInfo.displayName,
         email: userInfo.email,
         deviceToken: token,
@@ -91,10 +87,6 @@ exports.createOrUpdateUser = async (req, res) => {
       role
     });
 
-    if (!role || !['driver', 'passenger'].includes(role)) {
-      return res.status(400).json({ message: 'Valid role is required (driver or passenger)' });
-    }
-
     // Get user info from Firebase
     let userInfo = {};
     try {
@@ -107,12 +99,12 @@ exports.createOrUpdateUser = async (req, res) => {
       console.error('Error getting user info from Firebase:', error);
     }
 
-    // Find user by firebaseId and role, create or update
+    // Find user by firebaseId, create or update
     const user = await User.findOneAndUpdate(
-      { firebaseId, role },
+      { firebaseId },
       { 
         firebaseId,
-        role,
+        role: role || null,
         displayName: userInfo.displayName,
         email: userInfo.email,
         updatedAt: new Date()
@@ -148,20 +140,28 @@ exports.createOrUpdateUser = async (req, res) => {
   }
 };
 
+exports.clearUserRole = async (req, res) => {
+  try {
+    const firebaseId = req.user.uid;
+    const user = await User.findOneAndUpdate(
+      { firebaseId },
+      { role: null },
+      { new: true }
+    );
+    res.json({ message: 'User role cleared', user });
+  } catch (error) {
+    console.error('Error clearing user role:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
 exports.getUserByRole = async (req, res) => {
   try {
-    const { firebaseId, role } = req.params;
-
-    if (!role || !['driver', 'passenger'].includes(role)) {
-      return res.status(400).json({ message: 'Valid role is required (driver or passenger)' });
-    }
-
-    const user = await User.findOne({ firebaseId, role });
-
+    const { firebaseId } = req.params;
+    const user = await User.findOne({ firebaseId });
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
-
     res.json({
       user: {
         firebaseId: user.firebaseId,
@@ -172,7 +172,7 @@ exports.getUserByRole = async (req, res) => {
       }
     });
   } catch (error) {
-    console.error('Error getting user by role:', error);
+    console.error('Error getting user by firebaseId:', error);
     res.status(500).json({
       message: 'Server error',
       error: process.env.NODE_ENV === 'development' ? error.message : undefined

@@ -9,7 +9,10 @@ router.post('/device-token', authenticateToken, userControllers.updateDeviceToke
 // POST /api/users/create-or-update - Create or update user with role
 router.post('/create-or-update', authenticateToken, userControllers.createOrUpdateUser);
 
-// GET /api/users/:firebaseId/:role - Get user by firebaseId and role
-router.get('/:firebaseId/:role', authenticateToken, userControllers.getUserByRole);
+// POST /api/users/clear-role - Clear the user's role (logout)
+router.post('/clear-role', authenticateToken, userControllers.clearUserRole);
+
+// GET /api/users/:firebaseId - Get user by firebaseId
+router.get('/:firebaseId', authenticateToken, userControllers.getUserByRole);
 
 module.exports = router; 
