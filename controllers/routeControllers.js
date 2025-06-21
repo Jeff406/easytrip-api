@@ -106,6 +106,7 @@ exports.getNearbyRoutes = async (req, res) => {
 
 exports.getRoutesNearbyBothLocations = async (req, res) => {
   const { pickupLng, pickupLat, destLng, destLat, maxDistance = 100, limit = 10, departureTime } = req.query;
+  const requestingUserId = req.user.uid; // Get the requesting user's ID from auth middleware
 
   // Validate coordinates
   if (!pickupLng || !pickupLat || !destLng || !destLat) {
@@ -128,6 +129,7 @@ exports.getRoutesNearbyBothLocations = async (req, res) => {
 
   console.log('Max departure time:', maxDepartureTime);
   console.log('Max departure time 2:', maxDepartureTime2);
+  console.log('Excluding routes from driverId:', requestingUserId);
 
   // Validate coordinate format
   const coordinates = [pickupLng, pickupLat, destLng, destLat].map(coord => parseFloat(coord));
@@ -156,7 +158,8 @@ exports.getRoutesNearbyBothLocations = async (req, res) => {
             departureTime: { 
               $gte: maxDepartureTime,
               $lte: maxDepartureTime2
-            }
+            },
+            driverId: { $ne: requestingUserId } // Exclude routes from the requesting user
           }
         },
         { $limit: parseInt(limit) }
@@ -179,7 +182,8 @@ exports.getRoutesNearbyBothLocations = async (req, res) => {
             departureTime: { 
               $gte: maxDepartureTime,
               $lt: requestTime
-            }
+            },
+            driverId: { $ne: requestingUserId } // Exclude routes from the requesting user
           }
         },
         { $limit: parseInt(limit) }
