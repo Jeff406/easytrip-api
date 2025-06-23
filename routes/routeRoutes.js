@@ -1,9 +1,10 @@
 const express = require('express');
 const router = express.Router();
 const routeController = require('../controllers/routeControllers');
+const { authenticateToken } = require('../middleware/auth');
 
-router.post('/', routeController.createRoute);
+router.post('/', authenticateToken, routeController.createRoute);
 router.get('/nearby', routeController.getNearbyRoutes);
-router.get('/nearby-both', routeController.getRoutesNearbyBothLocations);
+router.get('/nearby-both', authenticateToken, routeController.getRoutesNearbyBothLocations);
 
 module.exports = router;
