@@ -32,18 +32,22 @@ exports.requestTrip = async (req, res) => {
     }
 
     // --- Validation for pending requests ---
+    console.log(`[Validation] Checking pending requests for passengerId: ${passengerId}`);
 
     // Find existing pending requests for this passenger
     const pendingRequests = await TripRequest.find({ passengerId, status: 'pending' });
+    console.log(`[Validation] Found ${pendingRequests.length} pending requests.`);
 
     // 1. Prevent duplicate requests for the same trip
     const isDuplicate = pendingRequests.some(req => req.routeId.toString() === routeId);
     if (isDuplicate) {
+      console.log(`[Validation] Failed: Duplicate request for routeId: ${routeId}`);
       return res.status(400).json({ message: 'You already have a pending request for this trip.' });
     }
 
     // 2. Limit pending requests to a maximum of 2
     if (pendingRequests.length >= 2) {
+      console.log(`[Validation] Failed: User has ${pendingRequests.length} pending requests (max 2).`);
       return res.status(400).json({ message: 'You have reached the maximum number of pending requests (2).' });
     }
     
@@ -53,14 +57,19 @@ exports.requestTrip = async (req, res) => {
       const newRequestDeparture = new Date(departureTime);
       const existingDeparture = existingRequest.departureTime;
       
+      console.log(`[Validation] Checking for same-day request. Existing: ${existingDeparture.toISOString()}, New: ${newRequestDeparture.toISOString()}`);
+      
       const isSameDate = newRequestDeparture.getFullYear() === existingDeparture.getFullYear() &&
                          newRequestDeparture.getMonth() === existingDeparture.getMonth() &&
                          newRequestDeparture.getDate() === existingDeparture.getDate();
 
       if (isSameDate) {
+        console.log(`[Validation] Failed: New request is on the same date as an existing pending request.`);
         return res.status(400).json({ message: 'You can only have one pending request per day. Please choose a different date.' });
       }
     }
+    
+    console.log('[Validation] All checks passed.');
 
     // Validate route exists and get driverId
     const route = await Route.findById(routeId);
