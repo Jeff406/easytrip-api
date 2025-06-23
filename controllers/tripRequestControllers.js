@@ -18,6 +18,7 @@ exports.requestTrip = async (req, res) => {
       requestNote,
       transportMode
     } = req.body;
+    const passengerId = req.user.uid;
 
     // Validate required fields
     if (!routeId || !pickup || !destination || !pickupCoords || !destinationCoords || 
@@ -30,6 +31,37 @@ exports.requestTrip = async (req, res) => {
       return res.status(400).json({ message: 'Invalid transport mode. Must be either car or scooter' });
     }
 
+    // --- Validation for pending requests ---
+
+    // Find existing pending requests for this passenger
+    const pendingRequests = await TripRequest.find({ passengerId, status: 'pending' });
+
+    // 1. Prevent duplicate requests for the same trip
+    const isDuplicate = pendingRequests.some(req => req.routeId.toString() === routeId);
+    if (isDuplicate) {
+      return res.status(400).json({ message: 'You already have a pending request for this trip.' });
+    }
+
+    // 2. Limit pending requests to a maximum of 2
+    if (pendingRequests.length >= 2) {
+      return res.status(400).json({ message: 'You have reached the maximum number of pending requests (2).' });
+    }
+    
+    // 3. If one pending request exists, ensure the new one is on a different date
+    if (pendingRequests.length === 1) {
+      const existingRequest = pendingRequests[0];
+      const newRequestDeparture = new Date(departureTime);
+      const existingDeparture = existingRequest.departureTime;
+      
+      const isSameDate = newRequestDeparture.getFullYear() === existingDeparture.getFullYear() &&
+                         newRequestDeparture.getMonth() === existingDeparture.getMonth() &&
+                         newRequestDeparture.getDate() === existingDeparture.getDate();
+
+      if (isSameDate) {
+        return res.status(400).json({ message: 'You can only have one pending request per day. Please choose a different date.' });
+      }
+    }
+
     // Validate route exists and get driverId
     const route = await Route.findById(routeId);
     if (!route) {
@@ -40,7 +72,7 @@ exports.requestTrip = async (req, res) => {
     const tripRequest = new TripRequest({
       routeId,
       driverId: route.driverId,
-      passengerId: req.user.uid, // Use authenticated user's ID
+      passengerId: passengerId, // Use authenticated user's ID
       pickup: {
         address: pickup,
         lat: pickupCoords[1],
