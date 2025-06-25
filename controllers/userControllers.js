@@ -1,13 +1,15 @@
 const User = require('../models/User');
 const admin = require('firebase-admin');
+const NotificationService = require('../services/notificationService');
 
 exports.updateDeviceToken = async (req, res) => {
   try {
-    const { token } = req.body;
+    const { token, role = 'driver' } = req.body;
     const firebaseId = req.user.uid; // Get the Firebase UID from the verified token
 
     console.log('Updating device token for user:', {
       firebaseId,
+      role,
       hasToken: !!token
     });
 
@@ -32,24 +34,19 @@ exports.updateDeviceToken = async (req, res) => {
       console.error('Error getting user info from Firebase:', error);
     }
 
-    // Find user by firebaseId and update device token and user info
-    const user = await User.findOneAndUpdate(
-      { firebaseId },
-      { 
-        firebaseId,
-        displayName: userInfo.displayName,
-        email: userInfo.email,
-        deviceToken: token,
-        updatedAt: new Date()
-      },
-      { 
-        new: true, 
-        upsert: true // Create user if doesn't exist
-      }
-    );
+    // Use the notification service to update the device token with validation
+    const tokenUpdated = await NotificationService.updateDeviceToken(firebaseId, token, role);
+    
+    if (!tokenUpdated) {
+      return res.status(400).json({ message: 'Invalid device token provided' });
+    }
+
+    // Get the updated user info
+    const user = await User.findOne({ firebaseId, role });
 
     console.log('Device token updated successfully for user:', {
       firebaseId: user.firebaseId,
+      role: user.role,
       displayName: user.displayName,
       email: user.email,
       hasDeviceToken: !!user.deviceToken
