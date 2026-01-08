@@ -1,10 +1,32 @@
 const admin = require('firebase-admin');
-const serviceAccount = require('../easytrip-bab08-firebase-adminsdk-fbsvc-1b66c19dad.json');
+const fs = require('fs');
+
+const serviceAccountJson = process.env.FIREBASE_ADMIN_SDK_JSON;
+const serviceAccountPath = process.env.FIREBASE_ADMIN_SDK_PATH;
+
+let serviceAccount;
+if (serviceAccountJson) {
+  try {
+    serviceAccount = JSON.parse(serviceAccountJson);
+  } catch (e) {
+    throw new Error('Invalid FIREBASE_ADMIN_SDK_JSON (must be valid JSON)');
+  }
+} else if (serviceAccountPath) {
+  try {
+    const raw = fs.readFileSync(serviceAccountPath, 'utf8');
+    serviceAccount = JSON.parse(raw);
+  } catch (e) {
+    throw new Error('Invalid FIREBASE_ADMIN_SDK_PATH (file must exist and contain valid JSON)');
+  }
+}
 
 // Initialize Firebase Admin if not already initialized
 if (!admin.apps.length) {
   // For development, we'll use a simple initialization
   // In production, you should use proper service account credentials
+  if (!serviceAccount) {
+    throw new Error('Missing Firebase Admin credentials. Set FIREBASE_ADMIN_SDK_JSON or FIREBASE_ADMIN_SDK_PATH.');
+  }
   admin.initializeApp({
     credential: admin.credential.cert(serviceAccount)
   });
