@@ -46,12 +46,33 @@ class NotificationService {
         return false;
       }
 
-      // Update the user's device token
-      const user = await User.findOneAndUpdate(
+      let user = await User.findOneAndUpdate(
         { firebaseId, role },
         { deviceToken: newToken, updatedAt: new Date() },
-        { new: true, upsert: true }
+        { new: true }
       );
+
+      if (!user) {
+        try {
+          user = await User.create({ firebaseId, role, deviceToken: newToken });
+        } catch (createError) {
+          if (createError.code !== 11000) {
+            throw createError;
+          }
+
+          // Legacy single-record users: update the existing firebaseId record
+          user = await User.findOneAndUpdate(
+            { firebaseId },
+            { deviceToken: newToken, role, updatedAt: new Date() },
+            { new: true }
+          );
+        }
+      }
+
+      if (!user) {
+        console.log('User not found for device token update:', { firebaseId, role });
+        return false;
+      }
 
       console.log('Device token updated successfully for user:', {
         firebaseId: user.firebaseId,

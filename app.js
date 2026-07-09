@@ -8,6 +8,8 @@ const tripRequestRoutes = require('./routes/tripRequestRoutes');
 const userRoutes = require('./routes/userRoutes');
 const messageRoutes = require('./routes/messageRoutes');
 
+const ensureUserIndexes = require('./utils/ensureUserIndexes');
+
 const app = express();
 
 app.use(cors());
@@ -38,8 +40,13 @@ const buildMongoUriFromEnv = () => {
 const mongoUri = process.env.MONGO_URI || buildMongoUriFromEnv();
 
 console.log(mongoUri);
-mongoose.connect(mongoUri)
-  .then(() => console.log('MongoDB connected'))
-  .catch((err) => console.error('MongoDB connection error:', err));
+const dbReady = mongoose.connect(mongoUri).then(async () => {
+  console.log('MongoDB connected');
+  await ensureUserIndexes();
+});
+
+dbReady.catch((err) => console.error('MongoDB connection error:', err));
+
+app.dbReady = dbReady;
   
 module.exports = app;
