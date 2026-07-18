@@ -42,7 +42,11 @@ exports.updateDeviceToken = async (req, res) => {
     }
 
     // Get the updated user info
-    const user = await User.findOne({ firebaseId, role });
+    const user = await User.findOne({ firebaseId, role }) || await User.findOne({ firebaseId });
+
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
 
     console.log('Device token updated successfully for user:', {
       firebaseId: user.firebaseId,
@@ -93,21 +97,29 @@ exports.createOrUpdateUser = async (req, res) => {
       console.error('Error getting user info from Firebase:', error);
     }
 
-    // Find user by firebaseId, create or update
-    const user = await User.findOneAndUpdate(
-      { firebaseId },
-      { 
-        firebaseId,
-        role: role || null,
-        displayName: userInfo.displayName,
-        email: userInfo.email,
-        updatedAt: new Date()
-      },
-      { 
-        new: true, 
-        upsert: true // Create user if doesn't exist
+    const userRole = role || null;
+    const userUpdate = {
+      firebaseId,
+      role: userRole,
+      displayName: userInfo.displayName,
+      email: userInfo.email,
+      updatedAt: new Date()
+    };
+
+    let user;
+    try {
+      user = await User.findOneAndUpdate(
+        { firebaseId, role: userRole },
+        userUpdate,
+        { new: true, upsert: true }
+      );
+    } catch (error) {
+      if (error.code !== 11000) {
+        throw error;
       }
-    );
+
+      user = await User.findOneAndUpdate({ firebaseId }, userUpdate, { new: true });
+    }
 
     console.log('User created/updated successfully:', {
       firebaseId: user.firebaseId,

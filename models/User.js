@@ -3,8 +3,7 @@ const mongoose = require('mongoose');
 const userSchema = new mongoose.Schema({
   firebaseId: {
     type: String,
-    required: true,
-    unique: true
+    required: true
   },
   role: {
     type: String,
@@ -32,6 +31,8 @@ const userSchema = new mongoose.Schema({
     default: Date.now
   }
 });
+
+userSchema.index({ firebaseId: 1, role: 1 }, { unique: true });
 
 // Update the updatedAt timestamp before saving
 userSchema.pre('save', function(next) {
