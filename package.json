@@ -4,7 +4,10 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "migrate": "node migrations/addRoleField.js"
+    "migrate": "node migrations/addRoleField.js",
+    "certs:generate": "./scripts/generate-self-signed-cert.sh",
+    "start": "node server.js",
+    "start:https": "SSL_KEY_PATH=./certs/server.key SSL_CERT_PATH=./certs/server.crt PORT=443 node server.js"
   },
   "keywords": [],
   "author": "",
