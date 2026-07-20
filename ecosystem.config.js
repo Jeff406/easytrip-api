@@ -11,7 +11,7 @@ module.exports = {
       ignore_watch: ['node_modules', '.git', 'certs'],
       env: {
         NODE_ENV: 'development',
-        PORT: 5000,
+        HTTP_PORT: 5000,
         MONGO_URI: process.env.MONGO_URI,
         MONGO_PROTOCOL: process.env.MONGO_PROTOCOL,
         MONGO_HOST: process.env.MONGO_HOST,
@@ -22,7 +22,8 @@ module.exports = {
       },
       env_production: {
         NODE_ENV: 'production',
-        PORT: 443,
+        HTTP_PORT: 5000,
+        HTTPS_PORT: 443,
         SSL_KEY_PATH: process.env.SSL_KEY_PATH || path.join(certDir, 'server.key'),
         SSL_CERT_PATH: process.env.SSL_CERT_PATH || path.join(certDir, 'server.crt'),
         MONGO_URI: process.env.MONGO_URI,

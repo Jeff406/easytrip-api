@@ -7,7 +7,8 @@
     "migrate": "node migrations/addRoleField.js",
     "certs:generate": "./scripts/generate-self-signed-cert.sh",
     "start": "node server.js",
-    "start:https": "SSL_KEY_PATH=./certs/server.key SSL_CERT_PATH=./certs/server.crt PORT=443 node server.js"
+    "start:dual": "SSL_KEY_PATH=./certs/server.key SSL_CERT_PATH=./certs/server.crt HTTP_PORT=5000 HTTPS_PORT=443 node server.js",
+    "start:https": "SSL_KEY_PATH=./certs/server.key SSL_CERT_PATH=./certs/server.crt HTTP_PORT=5000 HTTPS_PORT=443 node server.js"
   },
   "keywords": [],
   "author": "",

@@ -7,31 +7,35 @@ const admin = require('firebase-admin');
 const Message = require('./models/Message');
 const TripRequest = require('./models/TripRequest');
 
-const PORT = process.env.PORT || 5000;
+const HTTP_PORT = Number(process.env.HTTP_PORT || process.env.PORT || 5000);
+const HTTPS_PORT = Number(process.env.HTTPS_PORT || 443);
 const SSL_KEY_PATH = process.env.SSL_KEY_PATH;
 const SSL_CERT_PATH = process.env.SSL_CERT_PATH;
 
 const useHttps = Boolean(SSL_KEY_PATH && SSL_CERT_PATH);
-let server;
+const httpServer = http.createServer(app);
+let httpsServer = null;
 
 if (useHttps) {
   const httpsOptions = {
     key: fs.readFileSync(SSL_KEY_PATH),
     cert: fs.readFileSync(SSL_CERT_PATH),
   };
-  server = https.createServer(httpsOptions, app);
-} else {
-  server = http.createServer(app);
+  httpsServer = https.createServer(httpsOptions, app);
 }
 
-// Initialize Socket.IO
-const io = new Server(server, {
-  cors: {
-    origin: process.env.CLIENT_URL || 'http://localhost:3000',
-    methods: ['GET', 'POST'],
-    credentials: true
-  }
-});
+const socketCors = {
+  origin: process.env.CLIENT_URL || 'http://localhost:3000',
+  methods: ['GET', 'POST'],
+  credentials: true,
+};
+
+// Initialize Socket.IO on the primary server; attach the other when dual-listening.
+const primaryServer = httpsServer || httpServer;
+const io = new Server(primaryServer, { cors: socketCors });
+if (httpsServer) {
+  io.attach(httpServer);
+}
 
 // Socket.IO authentication middleware
 io.use(async (socket, next) => {
@@ -176,11 +180,14 @@ io.on('connection', (socket) => {
   });
 });
 
-// Start the server
-const protocol = useHttps ? 'https' : 'http';
-server.listen(PORT, () => {
-  console.log(`🚀 Server running on ${protocol}://localhost:${PORT}`);
-  if (useHttps) {
-    console.log(`🔐 TLS enabled (key: ${SSL_KEY_PATH}, cert: ${SSL_CERT_PATH})`);
-  }
+// Start HTTP (always) and HTTPS (when certs are configured)
+httpServer.listen(HTTP_PORT, () => {
+  console.log(`🚀 HTTP server running on http://localhost:${HTTP_PORT}`);
 });
+
+if (httpsServer) {
+  httpsServer.listen(HTTPS_PORT, () => {
+    console.log(`🔐 HTTPS server running on https://localhost:${HTTPS_PORT}`);
+    console.log(`🔐 TLS enabled (key: ${SSL_KEY_PATH}, cert: ${SSL_CERT_PATH})`);
+  });
+}
