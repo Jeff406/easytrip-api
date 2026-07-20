@@ -19,35 +19,24 @@ Creates:
 - `ca.crt` / `ca.key` — local CA (trust `ca.crt` in the Android app)
 - `server.crt` / `server.key` — API server certificate
 
-## Run API (dual HTTP + HTTPS)
+## Run API with PM2 (dual HTTP + HTTPS)
 
-When `SSL_KEY_PATH` and `SSL_CERT_PATH` are set, the server listens on **both**:
+The API runs under **PM2**. With `--env production`, `ecosystem.config.js` sets SSL paths and both ports so one process listens on:
 
-- HTTP on `HTTP_PORT` (default `5000`) — used by debug builds
-- HTTPS on `HTTPS_PORT` (default `443`) — used by release builds
+- HTTP on `HTTP_PORT` (`5000`) — used by debug builds
+- HTTPS on `HTTPS_PORT` (`443`) — used by release builds
 
 ```bash
 # from easytrip-api/
-npm run start:dual
-```
-
-Or:
-
-```bash
-export SSL_KEY_PATH="$(pwd)/certs/server.key"
-export SSL_CERT_PATH="$(pwd)/certs/server.crt"
-export HTTP_PORT=5000
-export HTTPS_PORT=443
-node server.js
-```
-
-Or use PM2:
-
-```bash
 pm2 start ecosystem.config.js --env production
+pm2 restart easytrip-api --env production
+pm2 logs easytrip-api
+pm2 status
 ```
 
-Without SSL env vars, only HTTP on `:5000` is started (`npm start`).
+HTTP-only (no TLS): `pm2 start ecosystem.config.js` (default `env`).
+
+One-off without PM2: `npm run start:dual` or `npm start`.
 
 ## Trust CA in Android
 
